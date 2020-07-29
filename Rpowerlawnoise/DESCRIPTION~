@@ -1,0 +1,33 @@
+Package: Rpowerlawnoise
+Title: A search for optimal degrees for autoregressive models of power law noise
+Version: 0.0.0.9000
+Authors@R: c(
+	person(given = "Benjamin",
+           family = "Taft",
+           role = c("aut", "cre"),
+           email = "ben.taft@lanmdarkacoustics.com.com"),
+	person(given = "Landmark Acoustics LLC",
+	       role c("cph")))
+Description: Power law noise is a time series where the energy at different
+    frequencies is a function of the frequency raised to a power. True red
+	noise has a power of -2, true white noise has a power of 0, and
+	true violet noise has a power of 2. Pink noise has a power between -2 and
+	0, exclusive. Blue noise has a power between 0 and 2, exclusive. There are
+	many ways to generate power law noise. A particularly useful one uses an
+	autoregressive model where the weights given to previous values of the time
+	series are a function of the power and a decreasing function of the time
+	lag to the term. Some powers have a fixed number of non-zero terms. White
+	noise, for example, has no non-zero terms, and true red noise has only one.
+	All other powers have a potentially infinite number of terms. The actual
+	number of terms in an autoregressive model is its degree. Obviously, there
+	are diminishing returns to increasing the degree of a model. This project
+	is aimed at finding a rule for choosing how big a model's degree should be.
+	The rule will be quantified according to the difference that one is willing
+	to tolerate between the observed spectral slope and the expected slope of
+	the spectrum of the time series.
+URL: https://github.com/sternarubra/powerlawnoise
+License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.1.1
