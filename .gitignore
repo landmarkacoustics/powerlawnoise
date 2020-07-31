@@ -42,7 +42,7 @@ vignettes/*.pdf
 *#
 *.zip
 *.pickle
-*.*~
+*~
 *.csv
 
 #from soundresolutions
