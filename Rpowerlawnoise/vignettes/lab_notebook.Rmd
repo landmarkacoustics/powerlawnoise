@@ -203,3 +203,4 @@ degree for a model is the square root of the desired time series' length. The
 next step is to put a framework around it that is more rigorous than "look at
 how obvious it is in the graph!" The first approach that springs to mind is to
 graph these special cases and see what happens.
+o

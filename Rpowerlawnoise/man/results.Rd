@@ -11,6 +11,9 @@ A data frame with 1440768 rows and 4 variables:
 \item{Degree:}{The number of terms in the AR model, \eqn{K}.}
 \item{Size:}{The number of samples in the time series, \eqn{N}.}
 \item{Slope:}{The observed slope of time series' log-log power spectrum.}
+\item{Positivized.Error:}{The deviation of the slope from the power, but
+positive.}
+\item{Degree.Ratio}{The Degree divided by the square root of the Size.}
 }
 }
 \usage{
