@@ -14,23 +14,39 @@ class NoiseMaker:
     ----------
     buffer_size : int
         The amount of memory to reserve for computation.
+    law : PowerLawNoise, optional
+        An autoregressive model for generating power law noise. Defaults to
+        white noise.
 
     Examples
     --------
-    >>> nm = NoiseMaker(0)
-    >>> red = PowerLawNoise(-2.0, 4)
-    >>> nm(red, np.linspace(1, 0, 5))
+    >>> nm = NoiseMaker(0, PowerLawNoise(-2.0, 4))
+    >>> nm(np.linspace(1, 0, 5))
     array([1.  , 1.75, 2.25, 2.5 , 2.5 ])
-    >>> nm(red, np.linspace(1, 0, 5), degree=1)
+    >>> nm(np.linspace(1, 0, 5), degree=1)
     array([1.  , 1.75, 2.25, 2.5 , 2.5 ])
 
     '''
 
-    def __init__(self, buffer_size: int):
+    _pad_value = 0.0
+
+    def __init__(self, buffer_size: int, law: PowerLawNoise = None):
         self._buffer = np.zeros(buffer_size)
+        if law is None:
+            law = PowerLawNoise(0.0, 0)
+        self._law = law
 
     @property
-    def _pad_value(self) -> float:
+    def law(self) -> PowerLawNoise:
+        r'''An autoregressive model for generating power law noise.'''
+        return self._law
+
+    @law.setter
+    def law(self, new_law):
+        self._law = new_law
+
+    @property
+    def pad_value(self) -> float:
         r'''The value that means no computations yet.
 
         Returns
@@ -39,7 +55,7 @@ class NoiseMaker:
 
         '''
 
-        return 0.0
+        return self._pad_value
 
     def _prepad(self, amount: int) -> np.ndarray:
         r'''Create the prehistory values that go before a noise input.
@@ -51,22 +67,19 @@ class NoiseMaker:
 
         Returns
         -------
-        np.ndarray : `amount` values, defaults to repeating `_pad_value`.
+        np.ndarray : `amount` values, defaults to repeating `pad_value`.
 
         '''
 
-        return np.repeat(self._pad_value, amount)
+        return np.repeat(self.pad_value, amount)
 
     def __call__(self,
-                 law: PowerLawNoise,
                  white_noise: np.ndarray,
                  degree: int = None) -> np.ndarray:
         r'''Create power law noise for each term in `white_noise`.
 
         Parameters
         ----------
-        law : PowerLawNoise
-            Holds the model's degree and exponent
         white_noise : np.ndarray
             Should be a sample of values from the Standard Normal Distribution
         degree : int, optional
@@ -75,12 +88,12 @@ class NoiseMaker:
         Returns
         -------
         power_law_noise : np.ndarray
-            The shape of the output's power spectrum will be frequency^alpha.
+            The slope of the output's power spectrum will be frequency^alpha.
 
         '''
 
         if degree is None:
-            degree = law.degree
+            degree = self.law.degree
 
         noise_length = len(white_noise)
         required_length = degree + noise_length
@@ -95,6 +108,6 @@ class NoiseMaker:
         for i in range(buffer_length - required_length,
                        buffer_length - degree):
             j = i + degree
-            self._buffer[j] += law(self._buffer[i:j])
+            self._buffer[j] += self._law(self._buffer[i:j])
 
         return self._buffer[-noise_length:]
