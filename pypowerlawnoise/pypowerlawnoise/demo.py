@@ -28,7 +28,7 @@ def slope_examples(noisemaker, slopefinder, powers, degrees, sizes, repeats):
                                                  rg.standard_normal(N),
                                                  degree))
 
-class SlopeExample(NoiseProducerMixin):
+class SlopeExample:
     r'''Build a bunch of power law noise and yield their slopes.
 
     Parameters
