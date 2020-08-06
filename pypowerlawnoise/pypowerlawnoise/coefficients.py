@@ -28,14 +28,12 @@ def generate_ar_coefficients(alpha: float) -> float:
     '''
 
     h = 1.0
-    k = 0
-    g = k - 1 + 0.5*alpha
-
+    k = 0.0
+    yield h
     while True:
-        k += 1
-        g += 1.0
-        h *= g / k
-        yield h
+        k += 1.0
+        h *= (k - 1 + 0.5*alpha) / k
+        yield -h
 
 
 def coefficient_array(alpha: float, degree: int) -> np.ndarray:
@@ -59,7 +57,7 @@ def coefficient_array(alpha: float, degree: int) -> np.ndarray:
     '''
 
     H = np.zeros(degree)
-    for i, h in zip(range(degree-1, -1, -1), generate_ar_coefficients(alpha)):
+    for i, h in zip(range(degree - 1, -1, -1), generate_ar_coefficients(alpha)):
         H[i] = h
 
     return H
