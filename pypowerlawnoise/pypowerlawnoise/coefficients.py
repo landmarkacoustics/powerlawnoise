@@ -33,7 +33,7 @@ def generate_ar_coefficients(alpha: float) -> float:
     while True:
         k += 1.0
         h *= (k - 1 + 0.5*alpha) / k
-        yield -h
+        yield h
 
 
 def coefficient_array(alpha: float, degree: int) -> np.ndarray:

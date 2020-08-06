@@ -12,9 +12,9 @@ from pypowerlawnoise.coefficients import \
 
 @pytest.mark.parametrize('alpha, coefs',
                          zip([-2, 0, 2],
-                             [np.r_[1, 1, 0, 0, 0],
+                             [np.r_[1, -1, 0, 0, 0],
                               np.r_[1, 0, 0, 0, 0],
-                              np.r_[1, -1, -1, -1, -1]]),
+                              np.r_[1, 1, 1, 1, 1]]),
                          ids=['red', 'white', 'violet'])
 def test_trivial_cases(alpha, coefs):
     N = len(coefs)

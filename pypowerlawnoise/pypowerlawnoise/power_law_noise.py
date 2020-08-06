@@ -127,3 +127,6 @@ class PowerLawNoise:
         '''
 
         return np.dot(noise, self._h[-len(noise):])
+
+    def __repr__(self) -> str:
+        return f'Law(alpha={self.alpha}, degree=={self.degree})'
