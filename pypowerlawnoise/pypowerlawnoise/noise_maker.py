@@ -10,6 +10,9 @@ from . import PowerLawNoise
 class NoiseMaker:
     r'''Holds a buffer for computing AR-based power-law noise.
 
+    This needs to have a buffer because the noise is stateful. Each new input
+    changes the future outputs.
+
     Parameters
     ----------
     buffer_size : int
@@ -111,3 +114,12 @@ class NoiseMaker:
             self._buffer[j] += self._law(self._buffer[i:j])
 
         return self._buffer[-noise_length:]
+
+
+def make_some_noise(law, input_source, degree) -> float:
+    buf = np.zeros(degree)
+    for x in input_source:
+        buf.roll(-1)
+        buf[-1] = x
+        buf[-1] = law(buf)
+        yield buf

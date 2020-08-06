@@ -71,7 +71,7 @@ class PowerLawNoise:
     def __init__(self, alpha: float, degree: int):
         self._a = alpha
         self._d = degree
-        self._h = -coefficient_array(self._a, self._d)
+        self._h = coefficient_array(self._a, self._d)[-1::-1]
         self._buffer = np.zeros(0, dtype=float)
 
     @property
@@ -84,7 +84,7 @@ class PowerLawNoise:
 
     @property
     def terms(self) -> np.ndarray:
-        return np.r_[1.0, -self._h[::-1]]
+        return self._h
 
     def transfer_function(self, fft_size: int) -> np.ndarray:
         '''A complex-valued set of terms that describe the frequency response.
@@ -127,6 +127,38 @@ class PowerLawNoise:
         '''
 
         return np.dot(noise, self._h[-len(noise):])
+
+    def generate_noise(self,
+                       input_source: np.ndarray,
+                       degree: int = None) -> float:
+        r'''Generate power law noise by iterating through `input_source`.
+
+        Parameters
+        ----------
+        input_source: np.ndarray
+            The noise or impulse or whatever that drives the power law output.
+        degree : int, optional
+            The degree of the model. Must be lte the default, `self.degree`.
+
+        Yields
+        ------
+        sample : float
+            One instant of power law noise.
+
+        '''
+
+        if degree is None:
+            degree = self.degree
+
+        if degree > 0:
+            buf = np.zeros(degree)
+            for x in input_source:
+                np.roll(buf, -1)
+                buf[-1] = x + np.dot(self._h[:-1][-degree:], buf)
+                yield buf[-1]
+        else:
+            for x in input_source:
+                yield x
 
     def __repr__(self) -> str:
         return f'Law(alpha={self.alpha}, degree=={self.degree})'

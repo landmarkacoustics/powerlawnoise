@@ -17,9 +17,9 @@ from pypowerlawnoise.coefficients import \
                               np.r_[1, 1, 1, 1, 1]]),
                          ids=['red', 'white', 'violet'])
 def test_trivial_cases(alpha, coefs):
-    N = len(coefs)
+    N = len(coefs) - 1
     for i, h in zip(range(N), generate_ar_coefficients(alpha)):
         assert h == coefs[i]
 
     assert_array_almost_equal(coefficient_array(alpha, N),
-                              coefs[-1::-1])
+                              coefs)

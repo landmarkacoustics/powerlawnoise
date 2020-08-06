@@ -7,6 +7,7 @@ Hershey, PA. pp 274-283.
 
 '''
 
+import itertools
 
 import numpy as np
 
@@ -28,12 +29,11 @@ def generate_ar_coefficients(alpha: float) -> float:
     '''
 
     h = 1.0
-    k = 0.0
+    g = 0.5 * alpha - 1.0
     yield h
-    while True:
-        k += 1.0
-        h *= (k - 1 + 0.5*alpha) / k
-        yield h
+    for k in itertools.count(1):
+        h *= 1.0 + g / k
+        yield -h
 
 
 def coefficient_array(alpha: float, degree: int) -> np.ndarray:
@@ -56,10 +56,5 @@ def coefficient_array(alpha: float, degree: int) -> np.ndarray:
 
     '''
 
-    H = np.zeros(degree)
-    for i, h in zip(range(degree - 1, -1, -1), generate_ar_coefficients(alpha)):
-        H[i] = h
-
-    return H
-
-
+    return np.array([x[0] for x in zip(generate_ar_coefficients(alpha),
+                                       range(degree + 1))])

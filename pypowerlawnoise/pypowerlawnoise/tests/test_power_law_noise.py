@@ -12,7 +12,7 @@ COLOR_NAMES = ['red', 'pink', 'white', 'blue', 'violet']
 
 @pytest.fixture
 def EQUIS():
-    return np.linspace(1, 0, 5, dtype=float)
+    return np.linspace(0, 1, 5, dtype=float)
 
 
 @pytest.fixture(scope='function')
