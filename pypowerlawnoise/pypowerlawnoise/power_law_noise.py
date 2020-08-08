@@ -23,8 +23,6 @@ class PowerLawNoise:
     ----------
     alpha : float
         The exponent of the power law.
-    AR_terms : np.ndarray
-        The terms of the AR models from h[degree] to h[1].
     degree : int
         The number of terms in the autoregressive (AR) model.
     terms : np.ndarray
@@ -152,9 +150,11 @@ class PowerLawNoise:
 
         if degree > 0:
             buf = np.zeros(degree)
+            H = self._h[-(degree+1):-1]
             for x in input_source:
-                np.roll(buf, -1)
-                buf[-1] = x + np.dot(self._h[:-1][-degree:], buf)
+                tmp = x + np.dot(H, buf)
+                buf[:-1] = buf[1:]
+                buf[-1] = tmp
                 yield buf[-1]
         else:
             for x in input_source:

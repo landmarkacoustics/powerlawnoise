@@ -29,10 +29,11 @@ def generate_ar_coefficients(alpha: float) -> float:
     '''
 
     h = 1.0
-    g = 0.5 * alpha - 1.0
     yield h
+    g = -1.0 + 0.5*alpha
     for k in itertools.count(1):
-        h *= 1.0 + g / k
+        g += 1.0
+        h *= g/k
         yield -h
 
 
