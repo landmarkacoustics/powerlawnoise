@@ -12,7 +12,7 @@ from pypowerlawnoise import SpectralSlopeFinder
                          2**np.arange(1, 11))
 def test_fft_size_is_correct(fft_size):
     ssf = SpectralSlopeFinder(fft_size)
-    freqs = np.arange(1, fft_size//2)
+    freqs = np.r_[1/fft_size**2, np.linspace(1/fft_size, 0.5, fft_size//2)]
     assert_allclose(ssf.frequencies, np.log10(freqs))
 
 
@@ -30,7 +30,11 @@ SPECTRA = np.array([np.r_[4, 0, 0, 0],
                     np.r_[9, 8, 0, 1]/9,
                     np.r_[4, 0, 8, 0]/9,])
 
-SLOPES = np.array([np.nan, np.nan, 0, -60.85359957994146, 59.26863677383678])
+SLOPES = np.array([-1.5849626341972594,
+                   -1.5849626341972594,
+                   0.0,
+                   -60.85359957994145,
+                   59.268636773836775])
 
 
 @pytest.mark.parametrize('X, should_be',
@@ -41,7 +45,7 @@ def test_spectrum(X, should_be):
 
 
 @pytest.mark.parametrize('X, should_be',
-                         zip(INPUT_SERIES[2:], SLOPES[2:]))
+                         zip(INPUT_SERIES, SLOPES))
 def test_call(X, should_be):
     ssf = SpectralSlopeFinder(len(X))
     spectral_slope = ssf(X)

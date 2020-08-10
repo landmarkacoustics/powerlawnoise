@@ -42,7 +42,9 @@ class SpectralSlopeFinder:
         self._make_frequencies(max(0, fft_size))
 
     def _make_frequencies(self, fft_size):
-        self._frequencies = np.log10(np.arange(1, fft_size//2))
+        self._frequencies = np.r_[1.0/fft_size**2,
+                                  np.linspace(1/fft_size, 0.5, fft_size//2)]
+        self._frequencies = np.log10(self._frequencies)
 
     @property
     def frequencies(self) -> np.ndarray:
@@ -102,5 +104,5 @@ class SpectralSlopeFinder:
         spectrum = self.spectrum(noise)[1:-1]
         if len(spectrum) != len(self._frequencies):
             self._make_frequencies(len(noise))
-        covariance = np.cov(self._frequencies, spectrum)
+        covariance = np.cov(self._frequencies[1:-1], spectrum)
         return covariance[0, 1] / covariance[0, 0]

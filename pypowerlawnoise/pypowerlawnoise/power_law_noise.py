@@ -155,6 +155,7 @@ class PowerLawNoise:
         if degree > 0:
             H = self._h[1:degree+1]
             buf = self._buffer[:degree]
+            buf[:] = 0.0
             for x in input_source:
                 tmp = x + np.dot(H, buf)
                 buf[1:] = buf[:-1]
@@ -164,7 +165,7 @@ class PowerLawNoise:
             for x in input_source:
                 yield x
 
-    def __call__(self, inputs: np.ndarray) -> np.ndarray:
+    def __call__(self, inputs: np.ndarray, degree: int = None) -> np.ndarray:
         r'''An array of power law noise with one sample per element of `input`.
 
         Parameters
@@ -178,7 +179,9 @@ class PowerLawNoise:
 
         '''
 
-        return np.array([x for x in self.generate_noise(inputs)])
+        return np.fromiter(self.generate_noise(inputs, degree),
+                           float,
+                           len(inputs))
 
 
     def __repr__(self) -> str:
