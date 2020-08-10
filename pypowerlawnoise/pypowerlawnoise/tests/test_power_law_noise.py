@@ -9,7 +9,7 @@ from pypowerlawnoise import PowerLawNoise
 ALPHAS = [-2, -1, 0, 1, 2]
 COLOR_NAMES = ['red', 'pink', 'white', 'blue', 'violet']
 N = 5
-EQUIS = np.linspace(0, 1, N, dtype=float)
+EQUIS = np.linspace(1, 0, N, dtype=float)
 
 
 def pytest_generate_tests(metafunc):
@@ -27,7 +27,7 @@ def pytest_generate_tests(metafunc):
                          ids=COLOR_NAMES)
 def test_integer_powers(alpha, answer):
     law = PowerLawNoise(alpha, N)
-    assert law(EQUIS) == answer
+    assert law.make_one_sample(EQUIS) == answer
 
 
 class TestTrivialExamples:

@@ -69,8 +69,8 @@ class PowerLawNoise:
     def __init__(self, alpha: float, degree: int):
         self._a = alpha
         self._d = degree
-        self._h = coefficient_array(self._a, self._d)[-1::-1]
-        self._buffer = np.zeros(0, dtype=float)
+        self._h = coefficient_array(self._a, self._d)
+        self._buffer = np.zeros(self._d, dtype=float)
 
     @property
     def alpha(self) -> float:
@@ -109,7 +109,7 @@ class PowerLawNoise:
 
         return np.fft.fft(np.r_[self.terms, np.zeros(fft_size - n_terms)])
 
-    def __call__(self, noise: np.ndarray) -> float:
+    def make_one_sample(self, noise: np.ndarray) -> float:
         r'''Returns either the predicted value or the AR effect.
 
         Parameters
@@ -120,11 +120,12 @@ class PowerLawNoise:
         Returns
         -------
         power_law_noise : float
-            The dot product of `noise` and either [`AR_terms`, 1] or `AR_terms`
+            The dot product of `noise` and `terms`
 
         '''
 
-        return np.dot(noise, self._h[-len(noise):])
+        n = min(len(noise), len(self._h))
+        return np.dot(noise, self._h[:n])
 
     def generate_noise(self,
                        input_source: np.ndarray,
@@ -148,17 +149,37 @@ class PowerLawNoise:
         if degree is None:
             degree = self.degree
 
+        if degree > self.degree:
+            raise ValueError('The degree cannot be larger than {self.degree}')
+
         if degree > 0:
-            buf = np.zeros(degree)
-            H = self._h[-(degree+1):-1]
+            H = self._h[1:degree+1]
+            buf = self._buffer[:degree]
             for x in input_source:
                 tmp = x + np.dot(H, buf)
-                buf[:-1] = buf[1:]
-                buf[-1] = tmp
-                yield buf[-1]
+                buf[1:] = buf[:-1]
+                buf[0] = tmp
+                yield buf[0]
         else:
             for x in input_source:
                 yield x
+
+    def __call__(self, inputs: np.ndarray) -> np.ndarray:
+        r'''An array of power law noise with one sample per element of `input`.
+
+        Parameters
+        ----------
+        inputs : np.ndarray
+            Probably white noise, but could be something else if you wanted.
+
+        Returns
+        -------
+        np.ndarray : a time series of power law noise
+
+        '''
+
+        return np.array([x for x in self.generate_noise(inputs)])
+
 
     def __repr__(self) -> str:
         return f'Law(alpha={self.alpha}, degree=={self.degree})'
