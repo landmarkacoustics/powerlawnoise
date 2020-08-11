@@ -101,8 +101,8 @@ class SpectralSlopeFinder:
         if len(noise) < 6:
             return np.nan
 
-        spectrum = self.spectrum(noise)[1:-1]
+        spectrum = self.spectrum(noise)
         if len(spectrum) != len(self._frequencies):
             self._make_frequencies(len(noise))
-        covariance = np.cov(self._frequencies[1:-1], spectrum)
+        covariance = np.cov(self._frequencies[1:], spectrum[1:])
         return covariance[0, 1] / covariance[0, 0]
