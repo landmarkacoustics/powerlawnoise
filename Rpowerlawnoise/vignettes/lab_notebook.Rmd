@@ -20,6 +20,7 @@ pycolors <- c(blue=   rgb(0.00, 0.00, 1.00, 0.8),
               orange= rgb(1.00, 0.50, 0.00, 0.8),
               green=  rgb(0.00, 0.90, 0.00, 0.8),
               darkred=rgb(0.65, 0.00, 0.00, 0.8))
+results <- read.csv("../data-raw/power_law_output.csv")
 ```
 
 # 2020 July 29
@@ -60,8 +61,8 @@ $K$
 I have actually already written a ton of code for this project, both in R and
 Python. However, I didn't really have it set up as a coherent repository. I'm
 trying to build on my recent experience with writing a modern, user-friendly R
-package to make both R Python packages that readers of the subsequent paper can
-use for their own ends.
+package to make both R and Python packages that readers of the subsequent paper
+can use for their own ends.
 
 ### the first snag
 I had to install the R package `reticulate` before I could compile this
@@ -111,6 +112,7 @@ actual power.
 
 ```{r, fig.dim=c(6, 6), out.width="95%"}
 sizes <- sort(unique(results$Size))
+size.colors <- rainbow(length(sizes), alpha=0.75)
 degrees <- sort(unique(results$Degree))
 slope.info <- expand.grid(Size=sizes, Degree=degrees)
 slope.models <- lapply(seq_len(nrow(slope.info)),
@@ -121,7 +123,6 @@ slope.models <- lapply(seq_len(nrow(slope.info)),
                              })
 slope.info$Metaslope <- sapply(slope.models, coef)
 slope.info$SS.Residuals <- sapply(slope.models, function(m)sum(residuals(m)^2))
-size.colors <- rainbow(length(sizes), alpha=0.75)
 plot(Metaslope ~ Degree, slope.info,
 	 type="n", las=1,
      xlab="Degree of Model", ylab="Metaslope between Slope and Power")
@@ -182,6 +183,7 @@ length.
 plot(Metaslope ~ I(Degree/Size), slope.info,
      las=1, log="x",
 	 pch=1, cex=3/2, col=size.colors[factor(Size)],
+     ylim=c(0.65, 0.9),
 	 xlab=expression(K/N), ylab="Metaslope between Slope and Power")
 legend("bottomright", legend=sizes, title=expression(N),
        pch=1, col=size.colors, pt.cex=3/2, bty="n")
@@ -193,9 +195,11 @@ as the square root of the length of the time series. Visually checking:
 plot(Metaslope ~ I(Degree/sqrt(Size)), slope.info,
      las=1, log="x",
 	 pch=1, cex=3/2, col=size.colors[factor(Size)],
+     xlim=10^c(-1, 1), ylim=c(0.84, 0.9),
 	 xlab=expression(K/sqrt(N)), ylab="Metaslope between Slope and Power")
 abline(v=1)
-legend("bottomright", legend=sizes, title=expression(N),
+legend("topleft", legend=sizes, title=expression(N),
+       ncol=2,
        pch=1, col=size.colors, pt.cex=3/2, bty="n")
 ```
 Personally, I find this picture very convincing. In the general case, the best
@@ -203,4 +207,18 @@ degree for a model is the square root of the desired time series' length. The
 next step is to put a framework around it that is more rigorous than "look at
 how obvious it is in the graph!" The first approach that springs to mind is to
 graph these special cases and see what happens.
-o
+
+# 2020 August 11
+
+Well, it's been a while, but that's OK because I've made a lot of improvements
+in the Python code. I also neglected to update the vignette on several days,
+mostly because of crippling depression. However, I did make progress in the
+analysis on those days.
+
+# 2020 August 12
+
+The python code does seem to work well. One improvement to the new version is
+that it can handle models with degree of zero. Those are all white noise, by
+definition, which makes it pretty clear that there should be two fits, one for
+reddish noise, and one for blueish noise. Furthermore, neither of those should
+necessarily be forced to go through the origin.

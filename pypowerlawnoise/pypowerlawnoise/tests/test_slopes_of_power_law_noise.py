@@ -36,8 +36,8 @@ def slope_case(request, seed: int = None):
 @pytest.mark.parametrize('alpha', np.linspace(-2, 2, 3),
                          ids=['red', 'white', 'violet'])
 def test_slope_works(slope_case, alpha):
-    degree = 2 * int(np.sqrt(slope_case.fft_size))
+    degree = int(np.ceil(np.sqrt(slope_case.fft_size)))
     law = PowerLawNoise(alpha, degree)
-    noise = np.array([x for x in law.generate_noise(slope_case.noise)])
-    noise *= np.hamming(len(noise))
-    assert_allclose(slope_case.finder(noise), alpha, rtol=1e-1, atol=1/3)
+    noise = np.fromiter([x for x in law.generate_noise(slope_case.noise)],
+                        float, slope_case.fft_size)
+    assert_allclose(slope_case.finder(noise), alpha, rtol=1/3, atol=1/3)

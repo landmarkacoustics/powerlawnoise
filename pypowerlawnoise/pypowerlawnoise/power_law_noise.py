@@ -99,15 +99,17 @@ class PowerLawNoise:
 
         See Also
         --------
-        numpy.fft.fft : computes the Discreet Fourier Transform
+        numpy.fft.fft : computes the Discrete Fourier Transform
 
         '''
 
-        n_terms = self._d + 1
+        n_terms = len(self._h)
         if fft_size < n_terms:
             raise ValueError(f'The fft_size must be at least {n_terms}.')
 
-        return np.fft.fft(np.r_[self.terms, np.zeros(fft_size - n_terms)])
+        tmp = np.r_[self.terms, np.zeros(fft_size - n_terms)]
+        tmp[1:n_terms] *= -1
+        return np.fft.fft(tmp)
 
     def make_one_sample(self, noise: np.ndarray) -> float:
         r'''Returns either the predicted value or the AR effect.
