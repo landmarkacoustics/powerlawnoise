@@ -117,18 +117,18 @@ degrees <- sort(unique(results$Degree))
 slope.info <- expand.grid(Size=sizes, Degree=degrees)
 slope.models <- lapply(seq_len(nrow(slope.info)),
                              function(i) {
-							     lm(Slope ~ Power - 1, results,
-							        subset=Size == slope.info$Size[i] &
-										   Degree == slope.info$Degree[i])
+                                 lm(Slope ~ Power - 1, results,
+                                    subset=Size == slope.info$Size[i] &
+                                           Degree == slope.info$Degree[i])
                              })
 slope.info$Metaslope <- sapply(slope.models, coef)
 slope.info$SS.Residuals <- sapply(slope.models, function(m)sum(residuals(m)^2))
 plot(Metaslope ~ Degree, slope.info,
-	 type="n", las=1,
+     type="n", las=1,
      xlab="Degree of Model", ylab="Metaslope between Slope and Power")
 invisible(lapply(seq_along(sizes), function(i){
     points(Metaslope ~ Degree, slope.info, subset=Size==sizes[i],
-	       type="b", lty=1, col=size.colors[i], pch=16)
+           type="b", lty=1, col=size.colors[i], pch=16)
 }))
 legend("bottomright", legend=sizes, title="Length of Time Series",
        pch=16, col=size.colors[seq_along(sizes)], lty=1, bty="n")
@@ -156,9 +156,11 @@ sp.latex(V)
 Since the answer has the form $c\exp(-bK) + a$, we can use `nls` to find $c$,
 $b$, and $a$ for each value of $N$.
 Actually, it's a second-order diffeq:
-$R{\left(K \right)} =
-\left(C_{1} e^{- K w \sqrt{z^{2} - 1}} +
-C_{2} e^{K w \sqrt{z^{2} - 1}}\right) e^{- K w z}$
+$$
+    R{\left(K \right)} =
+    \left(C_{1} e^{- K w \sqrt{z^{2} - 1}} +
+    C_{2} e^{K w \sqrt{z^{2} - 1}}\right) e^{- K w z}
+$$
 
 # 2020 July 29
 
@@ -170,8 +172,8 @@ a model's degree ($K$) affects the slope ($m$?) that relates desired Power
 ```{r fig.dim=c(6, 6), out.width="95%"}
 plot(Metaslope ~ Degree, slope.info,
      las=1, log="x",
-	 pch=1, cex=3/2, col=size.colors[factor(Size)],
-	 xlab=expression(K), ylab="Metaslope between Slope and Power")
+     pch=1, cex=3/2, col=size.colors[factor(Size)],
+     xlab=expression(K), ylab="Metaslope between Slope and Power")
 legend("bottomright", legend=sizes, title=expression(N),
        pch=1, col=size.colors, pt.cex=3/2, bty="n")
 ```
@@ -182,9 +184,9 @@ length.
 ```{r fig.dim=c(6, 6), out.width="95%"}
 plot(Metaslope ~ I(Degree/Size), slope.info,
      las=1, log="x",
-	 pch=1, cex=3/2, col=size.colors[factor(Size)],
+     pch=1, cex=3/2, col=size.colors[factor(Size)],
      ylim=c(0.65, 0.9),
-	 xlab=expression(K/N), ylab="Metaslope between Slope and Power")
+     xlab=expression(K/N), ylab="Metaslope between Slope and Power")
 legend("bottomright", legend=sizes, title=expression(N),
        pch=1, col=size.colors, pt.cex=3/2, bty="n")
 ```
@@ -194,9 +196,9 @@ as the square root of the length of the time series. Visually checking:
 ```{r fig.dim=c(6, 6), out.width="95%"}
 plot(Metaslope ~ I(Degree/sqrt(Size)), slope.info,
      las=1, log="x",
-	 pch=1, cex=3/2, col=size.colors[factor(Size)],
+     pch=1, cex=3/2, col=size.colors[factor(Size)],
      xlim=10^c(-1, 1), ylim=c(0.84, 0.9),
-	 xlab=expression(K/sqrt(N)), ylab="Metaslope between Slope and Power")
+     xlab=expression(K/sqrt(N)), ylab="Metaslope between Slope and Power")
 abline(v=1)
 legend("topleft", legend=sizes, title=expression(N),
        ncol=2,
@@ -222,3 +224,238 @@ that it can handle models with degree of zero. Those are all white noise, by
 definition, which makes it pretty clear that there should be two fits, one for
 reddish noise, and one for blueish noise. Furthermore, neither of those should
 necessarily be forced to go through the origin.
+
+# 2020 August 13
+
+The python code does work, and I generated a preliminary data set, this time
+with different degrees for different sizes, with the degrees centered on the
+square root of the length of the time series' sizes. Thee vignette approach
+above does not work on data where there are different degrees for different
+sizes. It might be tweakable with error catching rather than different logic,
+but I can't do that right now.
+
+# 2020 August 14
+
+Time to start wrangling the centered data. Inspecting it revealed that there is
+some log-log relationship between degree ratio and the difference between slope
+and power. However, size does seem to dominate things. Here are six different
+powers, showing the relationship between the absolute slope error and both size
+and degree ratio:
+
+```{r fig.dim=c(6, 6), out.width="95%"}
+results <- read.csv("../data-raw/centered.csv")
+results$Degree.Ratio <- with(results, Degree/sqrt(Size))
+results$Slope.Error <- with(results, abs(Slope - Power))
+sizes <- sort(unique(results$Size))
+size.colors <- rainbow(length(sizes), alpha=0.75)
+degrees <- sort(unique(results$Degree))
+ratios <- 10^seq(-log10(8), log10(8), length.out=50)
+par(mfrow=c(2,3));
+invisible(sapply(c(-2, -1.32, -0.68, 0.68, 1.32, 2), function(alpha){
+    with(subset(results, round(Power, 2) == alpha), {
+    tmp <- lm(log10(Slope.Error) ~
+              log10(Size)*(log10(Degree.Ratio) + I(log10(Degree.Ratio)^2)))
+    plot(Slope.Error ~ Degree.Ratio,
+         pch=1, cex=1/4, col=size.colors[factor(Size)],
+         las=1,
+         log="xy", ylim=c(0.0002, 2),
+         xlab="Degree Ratio",
+         ylab="Slope Error",
+         main=bquote(alpha==.(alpha)))
+    grid()
+    sapply(seq_along(sizes), function(i){
+        x <- ratios
+        y <- 10^predict(tmp, expand.grid(Size=sizes[i], Degree.Ratio=ratios));
+        lines(x, y, col=size.colors[i], lty=1)
+    })
+})}))
+```
+
+Let's look at the coefficients of these models as the power changes
+```{r fig.dim=c(6, 6), out.width="95%"}
+alphas <- sort(unique(results$Power))
+result.error.models <- lapply(alphas, function(alpha){
+    lm(log10(Slope.Error) ~
+       log10(Size)*(log10(Degree.Ratio) + I(log10(Degree.Ratio)^2)),
+       results,
+       subset=Power==alpha)
+})
+par(mfrow=c(2, 3))
+invisible(sapply(1:5, function(j){
+    plot(alphas,
+         sapply(result.error.models, function(m)coef(m)[j]),
+         ylab=ifelse(j==1,
+                     "Intercept",
+                     attr(terms(result.error.models[[1]]),
+                          "term.labels")[j-1]))
+}))
+```
+
+That makes it look to me that the only really significant terms are the
+intercept and the logarithm of size. I'm going to look at the residuals then.
+```{r fig.dim=c(6, 6), out.width="95%"}
+size.residual.models <- lapply(alphas, function(alpha){
+    lm(log10(Slope.Error) ~ log10(Size), results, subset=Power==alpha)
+})
+results$Size.Residual.Error <- NA
+for(i in seq_along(alphas)){
+    f <- results$Power == alphas[i]
+    results$Size.Residual.Error[f] <- log10(results$Slope.Error[f])
+    - predict(size.residual.models[[i]], results[f,])
+}
+
+plot(Size.Residual.Error ~ Power, results,
+     pch=1, col=size.colors[factor(Size)], cex=1/4,
+     las=1,
+     xlab=expression(alpha),
+     ylab="Size-corrected Slope Error")
+
+```
+
+# 2020 August 16
+
+I think I figured it out but, of course, I didn't write stuff down as I was
+making progress. I'm actually writing this the next day. I refined the approach
+some the next day, so I'll pick up there.
+
+# 2020 August 17
+
+I was still not satisfied with my analyses of how slope error changed with size
+and degree. In particular, I didn't like how the residual variance was larger
+for small sizes. I did a little Googling, and found
+[this site](https://fukamilab.github.io/BIO202/03-C-heterogeneity.html), which
+explains how to use the `gls` function to account for several different kinds
+of variance heterogeneity. It turns out that the best variance model is
+`varPower`, with a formula of `~ Size`.
+
+```{r fig.dim=c(6, 6), out.width="95%"}
+library(nlme)
+simple.form <- formula(Slope.Error ~ I(1/sqrt(Size)) + I(1/Degree.Ratio))
+different.models <- list(
+    "Power.Alone"=function(X){
+        gls(simple.form, X, weights=varPower(form=~Size))
+    },
+    "Exponent"=function(X){
+        gls(simple.form, X, weights=varExp(form=~Size))
+    },
+    "Const.Power"=function(X){
+        gls(simple.form, X, weights=varConstPower(form=~Size))
+    }
+)
+different.fits <- lapply(different.models, function(f){
+    lapply(alphas,
+           function(alpha)f(subset(results, Power==alpha)))
+})
+different.AICs <- data.frame(Power=alphas,
+                             lapply(different.fits,
+                                    function(ell)sapply(ell, AIC)))
+plot(0, 0, type="n", las=1,
+     xlab=expression(alpha), ylab="AIC",
+     xlim=c(-2, 2), ylim=c(-8000, 1000))
+grid()
+invisible(sapply(2:4, function(j){
+    points(different.AICs[, c(1, j)], cex=3, col=size.colors[2*(j-2)+1])
+}))
+legend("topleft",
+       legend=names(different.AICs)[2:4],
+       pch=1, col=size.colors[c(1, 3, 5)],
+       bty="n", cex=4/3)
+```
+
+With any luck, this will show that `varPower` and `varConstPower` are both
+better than `varExp`, and that `varPower` is better than `varConstPower`
+because it's simpler.
+
+Did you notice that I also slipped some new models in there? It now seem that
+the complicated fits that I was using before are actually unnecessary. The key
+insight is **Degree Ratio**, which is $\frac{K}{\sqrt{N}}$. The model becomes:
+$$
+    E(\alpha) = B_0(\alpha)
+	+ \frac{B_1(\alpha)}{\sqrt{N}}
+	+ \frac{B_2(\alpha)\sqrt{N}}{K}
+$$
+
+This has really nice properties. First, its limit is straightforward:
+$$
+    \lim_{K \to \infty}{E(\alpha)} = B_0(\alpha) + \frac{B_1(\alpha)}{\sqrt{N}}
+$$
+
+which means we can use epsilon-delta to look for a degree that is arbitrarily
+close to this limit:
+$$
+    \lim_{\delta \to 0}{\frac{B_2(\alpha)\sqrt{N}}{K+\delta}} < \epsilon
+$$
+
+which simplifies to:
+$$
+  \begin{align}
+    B_2(\alpha)\sqrt{N} & < \epsilon({K + \delta}) \\
+	B_2(\alpha)\sqrt{N} & < \epsilon K + \epsilon\delta \\
+	B_2(\alpha)\sqrt{N} & < \epsilon K \\
+	\epsilon K & > B_2(\alpha)\sqrt{N} \\
+	K &> \frac{B_2(\alpha)\sqrt{N}}{\epsilon}
+  \end{align}
+$$
+
+The excellent thing about this is that it comes back to degree ratio: 
+$$
+    \frac{K}{\sqrt{N}} = \frac{B_2(\alpha)}{\epsilon}
+$$
+
+FINALLY, a univariate function on $\alpha$ that suggests an 'optimum'
+degree relative to a time series' length!
+
+```{r fig.dim=c(6, 6), out.width="95%"}
+different.AICs$Coefficient <- sapply(different.fits$Power.Alone,
+                                     function(mo)coef(mo)[3])
+epsilons <- list("black"=0.01, "red"=0.005, "blue"=0.001) 
+plot(0, 0, type="n", las=1,
+     xlab=expression(alpha), ylab=expression(B[2](alpha)/epsilon),
+	 xlim=c(-2, 2), ylim=c(0, 20))
+grid()
+abline(v=4/3, lty=2, lwd=2)
+invisible(lapply(names(epsilons), function(n){
+    points(ceiling(Coefficient/epsilons[[n]]) ~ Power, different.AICs,
+	       cex=2, col=n)
+}))
+legend("topleft", bty="n",
+       title=expression(epsilon),
+	   legend=epsilons,
+	   col=c(1, 2, 4), cex=3/2, pch=1)
+```
+This figure fills me with glee because I can see the features that I know we
+need: $\check{K}(-2) = 1$, $\check{K}(0) = 0$, pink noise has a modest
+optiumum, and blue noise has a (mostly) increasing optimum. This graph shows
+how the relationship really breaks down around $\alpha > 4/3$, but that's OK
+because the y-axis is really Degree Ratio, and _this data set doesn't actually
+have any Degree Ratios greater than 8_! I am currently running a new BF'd up
+data set with Degree Ratios between 1/20 and 20. Hopefully, this will give a
+better fit to what goes on when \$alpha$ is large.
+
+### Sanity check
+Maybe the limit should be:
+$$
+  \lim_{\delta \to 0}{
+      p(\alpha)+\frac{q(\alpha)}{\sqrt{N}}+\frac{r(\alpha)\sqrt{N}}{K} -
+      p(\alpha)+\frac{q(\alpha)}{\sqrt{N}}+\frac{r(\alpha)\sqrt{N}}{K + \delta}
+  } < \epsilon
+$$
+
+That simplifies to $$
+  \begin{align}
+    \lim_{\delta \to 0}{
+        \frac{r(\alpha)\sqrt{N}}{K} - \frac{r(\alpha)\sqrt{N}}{K + \delta}
+    } & < \epsilon \\
+    \lim_{\delta \to 0}{
+        r(\alpha)\sqrt{N}(K + \delta) - r(\alpha)\sqrt{N} K
+    } & < K (K + \delta) \epsilon \\
+    \lim_{\delta \to 0}{
+        r(\alpha)\sqrt{N}K + r(\alpha)\sqrt{N}\delta - r(\alpha)\sqrt{N} K
+    } & < K^2 \epsilon + K \delta \epsilon \\
+    r(\alpha)\sqrt{N}K - r(\alpha)\sqrt{N} K & < K^2 \epsilon \\
+    r(\alpha)\sqrt{N} - r(\alpha)\sqrt{N} & < K \epsilon \\
+	0 & < K \epsilon
+  \end{align}
+$$
+
+Nope! Whee!
