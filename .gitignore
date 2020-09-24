@@ -38,12 +38,16 @@ vignettes/*.pdf
 # R Environment Variables
 .Renviron
 
-#*#
+# temporary files from Emacs
 *#
+*~
+
+#data files#
 *.zip
 *.pickle
-*~
 *.csv
+*.sql*
+*.Rdata
 
 #from soundresolutions
 # Byte-compiled / optimized / DLL files
@@ -153,3 +157,5 @@ ENV/
 
 # mypy
 .mypy_cache/
+
+# sql

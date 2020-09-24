@@ -1,0 +1,117 @@
+---
+title: "lab_notebook_September"
+output: rmarkdown::html_vignette rmarkdown::pdf_document
+vignette: >
+  %\VignetteIndexEntry{lab_notebook_september}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+library(tidyverse)
+```
+
+# 2020 September 16
+
+I flubbed my diarying in late August and early September because I was trying
+to learn how to use the [www.tidyverse.org](tidyverse). Now I am reconstructing
+the progress that I made on the analysis as I was using those tools.
+
+## Powers Near 2 Need Large Degrees
+
+True violet noise ($\alpha = 2$) requires a model with infinite degree. The
+range of degrees that I used in my first round of simulations was good enough
+for ($\alpha \lt 4/3$), but above that $\alpha$ the results seemed unstable. I
+ran new simulations with VERY large degree ratios so that I could get more
+insight into the behavior of models with large $\alpha$ values.
+
+I need to find a way to summarize the simulations at each power so that I can
+understand the effect of degree ratio at different powers. The original results
+were fine for low degree ratios. However, as the power approaches 2 the degree
+ratio must be very large, so I needed to rerun simulations with those high
+degrees.
+
+### Get the data from an SQLite database
+
+The key variables in `high.degree` are `Slope.Error`, which is $|m - \alpha|$,
+`Inverse.Sqrt.Size`, which is $1/\sqrt{N}$, and `Inverse.Degree.Ratio`, which
+is $\sqrt{N}/K$. The model therefore has three parameters. A crude single
+function for extracting the parameters and confidence intervals is:
+```{r}
+fo <- Slope.Error ~ Inverse.Sqrt.Size + Inverse.Degree.Ratio
+fam <- Gamma(link="log")
+column.names <- paste(rep(c("Intercept",
+                            "Inv.Sqrt(Size)",
+                            "Inv.Degree.Ratio"),
+                      each=3),
+                      c("lo", "B", "hi"),
+                      sep=".")
+
+extract.coefs.and.confints <- function(X) {
+    mo <- glm(fo, fam, X)
+    x <- as.numeric(rbind(coef(mo),
+                       t(confint(mo)))[c(2, 1, 3), ])
+    names(x) <- column.names
+	data.frame(t(x))
+}
+```
+
+I can then use some of the tidyverse's vaunted cleverness to fit models to each
+power and extract the parameters and confidence intervals.
+
+```{r}
+if("power_law_model_info.Rdata" %in% dir("data-raw/")) {
+    load("data-raw/power_model_info.Rdata")
+}
+else {
+    con <- DBI::dbConnect(RSQLite::SQLite(),
+                          "data-raw/power_law_results.sqlite3")
+    high.degree <- tbl(con, "HighDegree")
+
+    power.law.model.info <- high.degree %>%
+                            group_by(Power) %>%
+                            collect() %>%
+                            group_modify(extract.coefs.and.confints)
+	save(power.law.model.info, file="data-raw/power_model_info.Rdata")
+```
+
+Finally, plot the relationship between degree ratio, model power, and output
+slope.
+```{r fig.dim=c(6, 6), out.width="95%"}
+
+plot(Slope ~ Power, contexts, las=1, cex=2, pch=16, col=size.colors[factor(Size)], xlab=expression(alpha), ylab="Degree Ratio Term")
+grid()
+lines(alphas, predict(loess(Slope ~ Power, contexts, span=1/3, weights=log(Size,2)), alphas), lwd=2)
+legend("topleft", legend=sizes, bty="n", cex=4/3, pch=16, col=size.colors, title="Size", ncol=4)
+
+```
+The problem with this approach is that, when I try to save the `contexts`
+tibble, EACH model gets saved with __its own copy of the full dataset__. Yikes!
+
+I have to find a way to access the data without bringing R to its knees. Still
+working on it ...
+
+### Find Confidence Intervals for Parameters
+
+```{r}
+find.conf.int <- function(mo, ...) {
+    tmp <- confint(mo, ...)
+    interval.names <- paste(rep(c("lo", "hi"),
+                                each=nrow(tmp)),
+                            rownames(tmp),
+                            sep=".")
+    matrix(as.numeric(tmp),
+           nrow=1,
+           ncol=length(tmp),
+           dimnames=list(NULL, interval.names))
+}
+#> pink.info <- data.frame(Power=pink.alphas,
+                           t(sapply(pink.models, coef)),
+                           AIC=sapply(pink.models, AIC))
+#> pink.intervals <- data.frame(t(sapply(pink.models, find.conf.int)))
+#> pink.info <- cbind(pink.info, pink.intervals)
+```

@@ -1,0 +1,48 @@
+This is BibTeX, Version 0.99d (TeX Live 2019/Debian)
+Capacity: max_strings=200000, hash_size=200000, hash_prime=170003
+The top-level auxiliary file: power_law_noise.aux
+The style file: jasaauthyear2.bst
+Reallocated wiz_functions (elt_size=4) to 6000 items from 3000.
+Database file #1: power_law_noiseNotes.bib
+Database file #2: power_law_noise.bib
+You've used 9 entries,
+            3868 wiz_defined-function locations,
+            1263 strings with 12135 characters,
+and the built_in function-call counts, 5698 in all, are:
+= -- 464
+> -- 180
+< -- 9
++ -- 70
+- -- 57
+* -- 661
+:= -- 815
+add.period$ -- 16
+call.type$ -- 9
+change.case$ -- 63
+chr.to.int$ -- 9
+cite$ -- 9
+duplicate$ -- 386
+empty$ -- 461
+format.name$ -- 82
+if$ -- 1108
+int.to.chr$ -- 1
+int.to.str$ -- 1
+missing$ -- 65
+newline$ -- 38
+num.names$ -- 36
+pop$ -- 83
+preamble$ -- 1
+purify$ -- 55
+quote$ -- 0
+skip$ -- 158
+stack$ -- 0
+substring$ -- 314
+swap$ -- 308
+text.length$ -- 2
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 81
+warning$ -- 0
+while$ -- 43
+width$ -- 0
+write$ -- 113
